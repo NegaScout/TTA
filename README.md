@@ -7,7 +7,7 @@ Usage: ./test.sh ([OPTION] [ARGS]?)*
       
       -s,            specify source files (main.c is default)
       
-      -L,            choose language (just "C" for now)
+      -L,            choose language (Only "C" for now)
       
       -d,            prints also difference in your_output and datapub_output
       
