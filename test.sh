@@ -10,11 +10,24 @@ DO_DIFF="" # use -d if you want to see the diff
 IGNORE_TESTS="" #for see help for test ignoring
 IGNORE_REGEX="" #for see help for test ignoring
 TESTS_TO_IGNORE=()
+UPDATE=0
 # Binarka:
 BINARY="./main.out" 
 LANG="C"
 
+check_for_dependencies(){
 
+dpkg -l | grep -E -w "colorize" || COLORIZE="no"
+if [ "$COLORIZE" == "no" ]; then
+	read -p "Colorize package might not be installed. Do you want to install this dependency? (y/n)" confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] && INSTALL="yes"
+	
+	if [ "$INSTALL" == "yes" ]; then
+		(sudo apt-get update && sudo apt-get install colorize) && (echo "Colorized installed succesfully.") | colorize green
+	else echo "This script needs colorize to work. Exiting."; exit 1
+	fi
+fi
+
+}
 compile(){
 
     case $LANG in
@@ -34,6 +47,32 @@ fi
 
 }
 
+check_for_updates(){
+#!/bin/sh
+ls -a | grep ".git" || (echo "Script is not in git clone folder, cant check for updates..." && exit 1)
+git remote update &>/dev/null
+UPSTREAM=${1:-'@{u}'}
+LOCAL=$(git rev-parse @)
+REMOTE=$(git rev-parse "$UPSTREAM")
+BASE=$(git merge-base @ "$UPSTREAM")
+
+if [ $LOCAL = $REMOTE ]; then
+    echo "Up-to-date"
+    true
+elif [ $LOCAL = $BASE ]; then
+    printf "There is new version available. Do you want to pull changes? (y/n) " | colorize green
+    #read -p CONSENT
+    read -p "" confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] && git pull
+    	
+    	#(echo "$TEST_FILE" | grep -F -E "$IGNORE_REGEX" 1>/dev/null) && continue
+    #fi
+elif [ $REMOTE = $BASE ]; then
+    true
+    echo "Need to push"
+else
+    echo "TTA versions are diverged!"
+fi
+}
 show_help(){
 
     printf "Usage: ./test.sh ([OPTION] [ARGS]?)*
@@ -89,12 +128,22 @@ do
 done
 tput bel
 }
+check_for_dependencies
+(
+  # this flag will make to exit from current subshell on any error inside check_for_updates
+  set -e
+  if [ "$UPDATE" == "yes" ]; then
+  	check_for_updates
+  fi
+  
+)
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -h) show_help; exit 0;;
         -s) SOURCE_FILES="$2"; printf "Using %s source files...\n" "$SOURCE_FILES";shift;;
         -L) LANG="$2";printf "Language %s...\n" "$LANG";shift;;
+        -u) UPDATE="yes";shift;;
         -d) DO_DIFF="yes";;
         -t) TIMEOUT="$2"; printf "Running with timeout = $TIMEOUT\n";shift;;
         -r) REPEAT="$2"; printf "Running with repeat = $REPEAT\n";shift;;
