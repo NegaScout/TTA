@@ -115,7 +115,7 @@ for TEST_FILE in ./datapub/*.in; do
 done
 
 # Smaz binarku:
-rm -f "$BINARY"
+
 
 }
 
@@ -157,6 +157,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 main
+rm -f "$BINARY"
 
 exit $RETURN
 
