@@ -14,10 +14,16 @@ UPDATE=0
 # Binarka:
 BINARY="./main.out" 
 LANG="C"
+QUIET=""
 
+quitable(){
+if [ ! "$QUIET" == "yes" ]; then
+    printf "$*"
+fi
+}
 check_for_dependencies(){
 
-dpkg -l | grep -E -w "colorize" || COLORIZE="no"
+dpkg -l | grep -E -w "colorize" &>/dev/null || COLORIZE="no"
 if [ "$COLORIZE" == "no" ]; then
 	read -p "Colorize package might not be installed. Do you want to install this dependency? (y/n)" confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] && INSTALL="yes"
 	
@@ -41,7 +47,8 @@ gcc -g $SOURCE_FILES -o $BINARY -lm -std=c99  #2>/dev/null
 
 # Test kompilace:
 if [[ $? != 0 ]]; then
-	echo "There was an error during compilation..."
+    [[ $QUIET -eq  "yes" ]] && printf "There was an error during compilation..."
+	#echo "There was an error during compilation..."
 	exit 1
 fi
 
@@ -75,8 +82,10 @@ fi
 }
 show_help(){
 
-    printf "Usage: ./test.sh ([OPTION] [ARGS]?)*
+    printf "Usage: ./test.sh ([OPTION] [ARGS]?)* 
+       Exit code is number of failed tests.
       -h,            prints help
+      -q,            supresses any text outputs
       -s,            specify source files (main.c is default)
       -L,            choose language (just \"C\" for now)
       -u,            look for updates 
@@ -99,17 +108,17 @@ for TEST_FILE in ./datapub/*.in; do
 		(echo "${TESTS_TO_IGNORE[*]}"  | grep -F -q "$TEST_FILE") && continue
 		
 	fi
-	echo -n ">>> Testing $TEST_FILE "
+	quitable ">>> Testing $TEST_FILE "
  
 	DIFF=$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($BINARY 2>/dev/null < $TEST_FILE ) ||  echo "TIMED OUT after $TIMEOUT")
 	if [ "$DIFF" == "" ]; then
-		echo "- OK" | colorize green
+		quitable "~ OK\n" | colorize green
 	else
-		echo "- FAILED" | colorize red
-		RETURN=1
+		quitable "~ FAILED\n" | colorize red
+		((RETURN++))
  		if [ "$DO_DIFF" == "yes" ]; then
 		# Vypis rozdil mezi vystupem programu a vzorovym vystupem
-			printf "Output diff: $DIFF\n"
+			quitable "Output diff: %s\n" "$DIFF"
 		fi
 	fi
 done
@@ -124,7 +133,7 @@ main(){
 compile
 for i in $(seq $REPEAT);
 do 
-	printf "\nRunning...\n"
+	quitable "\nRunning $i...\n"
 	test_outputs
 done
 tput bel
@@ -138,18 +147,25 @@ check_for_dependencies
   fi
   
 )
+for arg in "$@";
+do 
+ 	if [ "$arg" == "-q" ]; then
+		QUIET="yes"
+	fi
+done
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -h) show_help; exit 0;;
-        -s) SOURCE_FILES="$2"; printf "Using %s source files...\n" "$SOURCE_FILES";shift;;
-        -L) LANG="$2";printf "Language %s...\n" "$LANG";shift;;
+        -q) QUIET="yes";;
+        -s) SOURCE_FILES="$2"; quitable "Using $SOURCE_FILES source files...\n";shift;;
+        -L) LANG="$2";quitable "Language $LANG...\n";shift;;
         -u) UPDATE="yes";shift;;
         -d) DO_DIFF="yes";;
-        -t) TIMEOUT="$2"; printf "Running with timeout = $TIMEOUT\n";shift;;
-        -r) REPEAT="$2"; printf "Running with repeat = $REPEAT\n";shift;;
-        -i) TESTS_TO_IGNORE+=("$2"); IGNORE_TESTS="yes"; printf "Ignoring... = '%s'\n" "${TESTS_TO_IGNORE[*]}";shift;;
-        -iR) IGNORE_REGEX="$2"; IGNORE_TESTS="yes"; printf "Ignoring... = '%s'\n" "$IGNORE_REGEX";shift;;
+        -t) TIMEOUT="$2"; quitable "Running with timeout = $TIMEOUT\n";shift;;
+        -r) REPEAT="$2"; quitable "Running with repeat = $REPEAT\n";shift;;
+        -i) TESTS_TO_IGNORE+=("$2"); IGNORE_TESTS="yes"; quitable "Ignoring... = '%s'\n" "${TESTS_TO_IGNORE[*]}";shift;;
+        -iR) IGNORE_REGEX="$2"; IGNORE_TESTS="yes"; quitable "Ignoring... = '$IGNORE_REGEX'\n";shift;;
         
         *) show_help; exit 1 ;;
     esac
