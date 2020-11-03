@@ -50,18 +50,18 @@ test_outputs(){
 
 # Pro vsechny soubory s nazvem "*.in" ve složce datapub...
 for TEST_FILE in ./datapub/*.in; do
-	
+
 	if [ "$IGNORE_TESTS" == "yes" ]; then
 		#špatn 
 		if [ ! "$IGNORE_REGEX" == "" ]; then
-			(echo "$TEST_FILE" | grep -E "$IGNORE_REGEX" 1>/dev/null) && continue
+			(echo "$TEST_FILE" | grep -F -E "$IGNORE_REGEX" 1>/dev/null) && continue
 		fi
-		(echo "${TESTS_TO_IGNORE[*]}"  | fgrep -q "$TEST_FILE") && continue
+		(echo "${TESTS_TO_IGNORE[*]}"  | grep -F -q "$TEST_FILE") && continue
 		
 	fi
 	echo -n ">>> Testing $TEST_FILE "
  
-	DIFF=$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($PROGRAM 2>/dev/null < $TEST_FILE ) ||  echo "TIMED OUT after $TIMEOUT")
+	DIFF=$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($BINARY 2>/dev/null < $TEST_FILE ) ||  echo "TIMED OUT after $TIMEOUT")
 	if [ "$DIFF" == "" ]; then
 		echo "- OK" | colorize green
 	else
