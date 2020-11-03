@@ -5,8 +5,6 @@ Usage: ./test.sh ([OPTION] [ARGS]?)*
 
       -h,            prints help
       
-      -u,            pulls newest version from origin
-      
       -s,            specify source files (main.c is default)
       
       -L,            choose language (just "C" for now)
