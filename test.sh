@@ -11,7 +11,7 @@ IGNORE_TESTS="" #for see help for test ignoring
 IGNORE_REGEX="" #for see help for test ignoring
 TESTS_TO_IGNORE=()
 # Binarka:
-PROGRAM="./main.out" 
+BINARY="./main.out" 
 LANG="C"
 
 
@@ -24,11 +24,11 @@ compile(){
 }
 compile_c(){
 # Progtest kompilace:
-gcc -g $SOURCE_FILES -o $PROGRAM -lm -std=c99  #2>/dev/null
+gcc -g $SOURCE_FILES -o $BINARY -lm -std=c99  #2>/dev/null
 
 # Test kompilace:
 if [[ $? != 0 ]]; then
-	echo "Chyba pri kompilaci."
+	echo "There was an error during compilation..."
 	exit 1
 fi
 
@@ -36,19 +36,19 @@ fi
 
 show_help(){
 
-    printf "Usage: ./hw02.sh ([OPTION] [ARGS]?)*\
-    \n  -h,            prints help\
-    \n  -s,            specify source files (main.c is default)\
-    \n  -L,            choose language (just \"C\" for now)\
-    \n  -d,            prints also difference your_out/datapub_out\
-    \n  -i <TESTS>,    ignore certain tests, where <TESTS> are relative paths in datapub dir (<string>)\
-    \n  -iR <TESTS_R>, ignore tests in datapub with regex <TESTS_R>\
-    \n  -r <REPEAT>,   repeat test (useful for uninnit variables errors)\
-    \n  -t <TIMEOUT>,  set timeout for tests\n"
+    printf "Usage: ./test.sh ([OPTION] [ARGS]?)*
+      -h,            prints help
+      -s,            specify source files (main.c is default)
+      -L,            choose language (just \"C\" for now)
+      -d,            prints also difference in your_output and datapub_output
+      -i <TESTS>,    ignore certain tests, where <TESTS> are relative paths in datapub directory (\"test01.in test02.in\")
+      -iR <TESTS_R>, ignore tests in datapub directory with extended regex <TESTS_R> (like \"test1.\.in\" or \"test0[1-5].\.in\")
+      -r <REPEAT>,   repeat tests (useful for not innitialized variables errors)
+      -t <TIMEOUT>,  set timeout for tests\n"
 }
 test_outputs(){
 
-# Pro vsechny soubory s nazvem "*in.txt"...
+# Pro vsechny soubory s nazvem "*.in" ve složce datapub...
 for TEST_FILE in ./datapub/*.in; do
 	
 	if [ "$IGNORE_TESTS" == "yes" ]; then
@@ -61,7 +61,6 @@ for TEST_FILE in ./datapub/*.in; do
 	fi
 	echo -n ">>> Testing $TEST_FILE "
  
-	# Zjisti rozdil mezi vystupem programu a vzorovym vystupem a uloz ho do promenne $DIFF
 	DIFF=$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($PROGRAM 2>/dev/null < $TEST_FILE ) ||  echo "TIMED OUT after $TIMEOUT")
 	if [ "$DIFF" == "" ]; then
 		echo "- OK" | colorize green
@@ -69,7 +68,6 @@ for TEST_FILE in ./datapub/*.in; do
 		echo "- FAILED" | colorize red
 		RETURN=1
  		if [ "$DO_DIFF" == "yes" ]; then
-		# Vypis obsah testovaciho vstupu (tedy data, ktera chybu zpusobila)
 		# Vypis rozdil mezi vystupem programu a vzorovym vystupem
 			printf "Output diff: $DIFF\n"
 		fi
@@ -77,7 +75,7 @@ for TEST_FILE in ./datapub/*.in; do
 done
 
 # Smaz binarku:
-rm -f program.out
+rm -f "$BINARY"
 
 }
 
