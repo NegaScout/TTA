@@ -1,5 +1,5 @@
 # TTA
-Testing tool for assignments with known input and output stored in ./datapub.
+Testing tool for assignments with known input and output.
 
 Usage: ./test.sh ([OPTION] [ARGS]?)*
 
