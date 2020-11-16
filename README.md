@@ -3,8 +3,8 @@ Testing tool for assignments with known input and output.
 
 Usage: ./test.sh ([OPTION] [ARGS]?)*
 
-       This script looks for all <test_file>.in, pipes them into your binary and then compares them with <test_file>.out.
-       Example of using ./test.sh -d -t 5 -r 3 -o \"./main\" -iR \"test0[1-5].*\"
+       This script looks for all ./datapub/<test_file>.in, pipes them into your binary and then compares them with ./datapub/<test_file>.out.
+       Example of using ./test.sh -d -t 5 -r 3 -o "./main" -iR "test0[1-5].*"
        Exit code is number of failed tests. 
        
       -h,            prints help
