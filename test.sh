@@ -88,7 +88,6 @@ show_help(){
 test_outputs(){
 
 for TEST_FILE in ./datapub/*.in; do
-
 	if [ "$IGNORE_TESTS" == "yes" ]; then
 
 		if [ ! "$IGNORE_REGEX" == "" ]; then
@@ -105,7 +104,7 @@ for TEST_FILE in ./datapub/*.in; do
 		quitable "~ OK\n" | colorize green
 	else
 		quitable "~ FAILED\n" | colorize red
-		((RETURN++))
+		#((RETURN++)) this aborts script on error for some reason
  		if [ "$DO_DIFF" == "yes" ]; then
 
 			quitable "Output diff: %s\n" "$DIFF"
