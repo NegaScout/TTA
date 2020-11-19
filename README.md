@@ -16,6 +16,6 @@ Usage: ./test.sh ([OPTION] [ARGS]?)*
       -i <TESTS>,    ignore certain tests, where <TESTS> are relative paths in 'datapub' directory, like: (\"test01.in test02.in\")
       -iR <TESTS_R>, ignore tests in 'datapub' directory with extended regex (grep -w -E <TESTS_R>)  (like \"test1.in\" or \"test0[1-5].*\")
       -r <REPEAT>,   repeat selected tests for <REPEAT> times
-      -t <TIMEOUT>,  set timeout for the tests
+      -t <TIMEOUT>,  set timeout for the tests  (doesnt inform if timeout, cant get it to work :< Help appriciated)
       
 If there is some issue, please let me know using git Issues.
