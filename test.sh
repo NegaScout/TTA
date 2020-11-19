@@ -15,6 +15,7 @@ BINARY="./main.out" #default binary path
 #LANG="C"
 QUIET=""
 MAKE=""
+DIFF=""
 #COMPILATION=""
 quitable(){
 if [ ! "$QUIET" == "yes" ]; then
@@ -83,11 +84,13 @@ show_help(){
       -i <TESTS>,    ignore certain tests, where <TESTS> are relative paths in 'datapub' directory, like: (\"test01.in test02.in\")
       -iR <TESTS_R>, ignore tests in 'datapub' directory with extended regex (grep -w -E <TESTS_R>)  (like \"test1.in\" or \"test0[1-5].*\")
       -r <REPEAT>,   repeat selected tests for <REPEAT> times
-      -t <TIMEOUT>,  set timeout for the tests\n"
+      -t <TIMEOUT>,  set timeout for the tests (doesnt inform of timeout, cant get it to work :<)\n"
 }
+
 test_outputs(){
 
 for TEST_FILE in ./datapub/*.in; do
+#echo "$TEST_FILE"
 	if [ "$IGNORE_TESTS" == "yes" ]; then
 
 		if [ ! "$IGNORE_REGEX" == "" ]; then
@@ -97,17 +100,17 @@ for TEST_FILE in ./datapub/*.in; do
 		
 	fi
 	quitable ">>> Testing $TEST_FILE "
-
-    DIFF=$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($BINARY 2>/dev/null < $TEST_FILE ) ||  echo "TIMED OUT after $TIMEOUT")
-	
+    DIFF="$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($BINARY 2>/dev/null <$TEST_FILE) ||  echo "" )"
 	if [ "$DIFF" == "" ]; then
 		quitable "~ OK\n" | colorize green
 	else
+
 		quitable "~ FAILED\n" | colorize red
-		#((RETURN++)) this aborts script on error for some reason
+		#((RETURN++)) this aborts script on
  		if [ "$DO_DIFF" == "yes" ]; then
 
 			quitable "Output diff: %s\n" "$DIFF"
+			echo ""
 		fi
 	fi
 done
@@ -116,9 +119,10 @@ done
 
 main(){
 set -e
-ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
+
 
 compile
+ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
 for i in $(seq $REPEAT);
 do 
 	quitable "\nRunning $i...\n"
