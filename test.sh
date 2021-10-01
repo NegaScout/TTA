@@ -11,127 +11,147 @@ IGNORE_TESTS="" #see help for test ignoring
 IGNORE_REGEX="" #see help for test ignoring
 TESTS_TO_IGNORE=()
 UPDATE=""
-BINARY="./main.out" #default binary path
-#LANG="C"
+BINARY="./main.out" #default binary path. its not main to not overwrite your other binary that might be named "main"
 QUIET=""
-MAKE=""
+FLAGS=""
 DIFF=""
-#COMPILATION=""
+COMPILATOR="gcc"
+SOURCE_FILES="main.c" #default source file
+
 quitable(){
-if [ ! "$QUIET" == "yes" ]; then
-    printf "$*"
-fi
+
+    if [ ! "$QUIET" == "yes" ]; then
+
+        printf "$*"
+    fi
 }
+
 check_for_dependencies(){
 
-dpkg -l | grep -E -w "colorize" &>/dev/null || COLORIZE="no"
-if [ "$COLORIZE" == "no" ]; then
-	read -p "Colorize package might not be installed. Do you want to install this dependency? (y/n)" confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] && INSTALL="yes"
-	
-	if [ "$INSTALL" == "yes" ]; then
-		(sudo apt-get update && sudo apt-get install colorize) && (echo "Colorized installed succesfully.") | colorize green
-	else echo "This script needs colorize to work. Exiting."; exit 1
-	fi
-fi
+    dpkg -l | grep -E -w "colorize" &>/dev/null || COLORIZE="no"
+    if [ "$COLORIZE" == "no" ]; then
+
+        read -p "Colorize package might not be installed. Do you want to install this dependency? (y/n)" confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] && INSTALL="yes"
+        
+        if [ "$INSTALL" == "yes" ]; then
+            (sudo apt-get update && sudo apt-get install colorize) && (echo "Colorized installed succesfully.") | colorize green
+        else echo "This script needs colorize to work. Exiting."; exit 1
+        fi
+    fi
 
 }
+
 compile(){
-if [ "$MAKE" == "yes" ]; then
-	COMPILATION="m" 
-fi
+    if [ "$MAKE" == "yes" ]; then
 
-    case $COMPILATION in
-        m) make;;
-    esac
+        COMPILATOR="make" 
+        quitable "Compiling using ${COMPILATOR}...\n"
+        $COMPILATOR
+    else
 
+        quitable "Compiling using ${COMPILATOR} -o ${BINARY} ${SOURCE_FILES} ${FLAGS}...\n"
+        $COMPILATOR -o $BINARY $SOURCE_FILES $FLAGS
+    fi
+    
 }
 
 check_for_updates(){
 #!/bin/sh
-ls -a | grep ".git" || (echo "Script is not in git clone folder, cant check for updates..." && exit 1)
-git remote update &>/dev/null
-UPSTREAM=${1:-'@{u}'}
-LOCAL=$(git rev-parse @)
-REMOTE=$(git rev-parse "$UPSTREAM")
-BASE=$(git merge-base @ "$UPSTREAM")
+    ls -a | grep ".git" || (echo "Script is not in git clone folder, cant check for updates..." && exit 1)
+    git remote update &>/dev/null
+    UPSTREAM=${1:-'@{u}'}
+    LOCAL=$(git rev-parse @)
+    REMOTE=$(git rev-parse "$UPSTREAM")
+    BASE=$(git merge-base @ "$UPSTREAM")
 
-if [ $LOCAL = $REMOTE ]; then
-    echo "Up-to-date"
-    true
-elif [ $LOCAL = $BASE ]; then
-    printf "There is new version available. Do you want to pull changes? (y/n) " | colorize green
-    read -p "" confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] && git pull
-    	
-elif [ $REMOTE = $BASE ]; then
-    true
-    echo "Need to push"
-else
-    echo "TTA versions are diverged!"
-fi
+    if [ $LOCAL = $REMOTE ]; then
+
+        echo "Up-to-date" | colorize green
+        true
+    elif [ $LOCAL = $BASE ]; then
+
+        printf "There is new version available. Do you want to pull changes? (y/n) " | colorize green
+        read -p "" confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] && git pull
+            
+    elif [ $REMOTE = $BASE ]; then
+
+        true
+        echo "Need to push"
+    else
+
+        echo "TTA versions are diverged!" | colorize red
+    fi
 }
+
 show_help(){
 
     printf "Usage: ./test.sh ([OPTION] [ARGS]?)* 
        This script looks for all <test_file>.in, pipes them into your binary and then compares them with <test_file>.out.
        Example of using ./test.sh -d -t 5 -r 3 -o \"./main\" -iR \"test0[1-5].*\"
        Exit code is number of failed tests. 
-      -h,            prints help
-      -q,            supresses any text outputs
-      -o,            target binary
-      -m,            compile with your local Makefile
-      -u,            look for update on this script at github
-      -d,            prints also the difference in your_output and datapub_output
-      -i <TESTS>,    ignore certain tests, where <TESTS> are relative paths in 'datapub' directory, like: (\"test01.in test02.in\")
-      -iR <TESTS_R>, ignore tests in 'datapub' directory with extended regex (grep -w -E <TESTS_R>)  (like \"test1.in\" or \"test0[1-5].*\")
-      -r <REPEAT>,   repeat selected tests for <REPEAT> times
-      -t <TIMEOUT>,  set timeout for the tests (doesnt inform of timeout, cant get it to work :<)\n"
+      -h,               prints help
+      -c <COMPILATOR>,  uses specified compilator (default is gcc)
+      -s <S_FILES>,     uses specified source files (Use as \"source1.c source2.c\" ..!), default is \"main.c\"
+      -F <FLAGS>,       feeds specified flags into compilator args in \"\$COMPILATOR -o \$SOURCE_FILES \$BINARY \$FLAGS\" manner
+      -q,               supresses any text outputs
+      -o,               target binary AND output binary for COMPILATOR
+      -m,               compile with your local Makefile
+      -u,               look for update on this script at github
+      -d,               prints also the difference in your_output and datapub_output
+      -i <TESTS>,       ignore certain tests, where <TESTS> are relative paths in 'datapub' directory, like: (\"test01.in test02.in\")
+      -iR <TESTS_R>,    ignore tests in 'datapub' directory with extended regex (grep -w -E <TESTS_R>)  (like \"test1.in\" or \"test0[1-5].*\")
+      -r <REPEAT>,      repeat selected tests for <REPEAT> times
+      -t <TIMEOUT>,     set timeout for the tests (doesnt inform of timeout, cant get it to work :<)\n"
 }
 
 test_outputs(){
 
-for TEST_FILE in ./datapub/*.in; do
-#echo "$TEST_FILE"
-	if [ "$IGNORE_TESTS" == "yes" ]; then
+    for TEST_FILE in ./datapub/*.in; do
+    #echo "$TEST_FILE"
+        if [ "$IGNORE_TESTS" == "yes" ]; then
 
-		if [ ! "$IGNORE_REGEX" == "" ]; then
-			(echo "$TEST_FILE" | grep -E "$IGNORE_REGEX" 1>/dev/null) && continue
-		fi
-		(echo "${TESTS_TO_IGNORE[*]}"  | grep -w -q "$TEST_FILE") && continue
-		
-	fi
-	quitable ">>> Testing $TEST_FILE "
-    DIFF="$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($BINARY 2>/dev/null <$TEST_FILE) ||  echo "" )"
-	if [ "$DIFF" == "" ]; then
-		quitable "~ OK\n" | colorize green
-	else
+            if [ ! "$IGNORE_REGEX" == "" ]; then
 
-		quitable "~ FAILED\n" | colorize red
-		#((RETURN++)) this aborts script on
- 		if [ "$DO_DIFF" == "yes" ]; then
+                (echo "$TEST_FILE" | grep -E "$IGNORE_REGEX" 1>/dev/null) && continue
+            fi
+            (echo "${TESTS_TO_IGNORE[*]}"  | grep -w -q "$TEST_FILE") && continue
+            
+        fi
+        quitable ">>> Testing $TEST_FILE "
+        DIFF="$(timeout "$TIMEOUT" diff "${TEST_FILE/in/out}" <($BINARY 2>/dev/null <$TEST_FILE) ||  echo "" )"
+        if [ "$DIFF" == "" ]; then
 
-			quitable "Output diff: %s\n" "$DIFF"
-			echo ""
-		fi
-	fi
-done
+            quitable "~ OK\n" | colorize green
+        else
+
+            quitable "~ FAILED\n" | colorize red
+            #((RETURN++)) this aborts script on
+            if [ "$DO_DIFF" == "yes" ]; then
+
+                quitable "Output diff: %s\n" "$DIFF"
+                echo ""
+            fi
+        fi
+    done
 
 }
 
 main(){
-set -e
+    set -e
 
 
-compile
-ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
-for i in $(seq $REPEAT);
-do 
-	quitable "\nRunning $i...\n"
-	test_outputs
-done
+    compile
+    ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
+    for i in $(seq $REPEAT);
+    do 
+        quitable "\nRunning $i...\n"
+        test_outputs
+    done
 
-if [ ! "$QUIET" == "yes" ]; then
-    tput bel
-fi
+    if [ ! "$QUIET" == "yes" ]; then
+
+        tput bel
+    fi
 }
 
 check_for_dependencies
@@ -139,6 +159,7 @@ check_for_dependencies
   # this flag will make to exit from current subshell on any error inside check_for_updates
   set -e
   if [ "$UPDATE" == "yes" ]; then
+
   	check_for_updates
   fi
   
@@ -146,6 +167,7 @@ check_for_dependencies
 for arg in "$@";
 do 
  	if [ "$arg" == "-q" ]; then
+
 		QUIET="yes"
 	fi
 done
@@ -155,9 +177,10 @@ while [[ "$#" -gt 0 ]]; do
         -h) show_help; exit 0;;#
         -q) QUIET="yes";;#
         -o) BINARY="$2";shift;;#
-        -s) SOURCE_FILES="$2"; quitable "Using $SOURCE_FILES source files...\n";shift;;
-        -L) LANG="$2";quitable "Language $LANG...\n";shift;;
+        -s) SOURCE_FILES="$2"; quitable "Using \"$SOURCE_FILES\" source files...\n";shift;;
+        -F) FLAGS="$2";shift;;
         -m) MAKE="yes";;#
+        -c) COMPILATOR="$2";shift;;
         -u) UPDATE="yes";;#
         -d) DO_DIFF="yes";;#
         -t) TIMEOUT="$2"; quitable "Running with timeout = $TIMEOUT\n";shift;;#
