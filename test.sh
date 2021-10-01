@@ -111,7 +111,7 @@ show_help(){
       -i <TESTS>,       ignore certain tests, where <TESTS> are relative paths in <TEST_DIR> directory, like: (\"test01.in test02.in\")
       -iR <TESTS_R>,    ignore tests in <TEST_DIR> directory with extended regex (grep -w -E <TESTS_R>)  (like \"test1.in\" or \"test0[1-5].*\")
       -r <REPEAT>,      repeat selected tests for <REPEAT> times
-      -nW,              doesnt remove all \'\r\' cariage returns characters from all files in <TEST_DIR> 
+      -nW,              doesnt remove all \'\r\' cariage returns characters from all files in <TEST_DIR> (it defaultly does)
       -t <TIMEOUT>,     set timeout for the tests (doesnt inform of timeout, cant get it to work :<)\n"
 }
 
