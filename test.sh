@@ -17,6 +17,8 @@ FLAGS=""
 DIFF=""
 COMPILATOR="gcc"
 SOURCE_FILES="main.c" #default source file
+TEST_DIR="datapub"
+DO_C_RETURNS="yes"
 
 quitable(){
 
@@ -82,7 +84,14 @@ check_for_updates(){
         echo "TTA versions are diverged!" | colorize red
     fi
 }
+remove_cariage_returns(){
 
+    for file in ./$TEST_DIR/*.out; do
+	    
+        cat "$file" | tr -d '\r' > "tmp"
+	    mv "tmp" $file
+    done;
+}
 show_help(){
 
     printf "Usage: ./test.sh ([OPTION] [ARGS]?)* 
@@ -98,15 +107,17 @@ show_help(){
       -m,               compile with your local Makefile
       -u,               look for update on this script at github
       -d,               prints also the difference in your_output and datapub_output
-      -i <TESTS>,       ignore certain tests, where <TESTS> are relative paths in 'datapub' directory, like: (\"test01.in test02.in\")
-      -iR <TESTS_R>,    ignore tests in 'datapub' directory with extended regex (grep -w -E <TESTS_R>)  (like \"test1.in\" or \"test0[1-5].*\")
+      -D <TEST_DIR>,    specifies directory with tests, default is \"datapub\"
+      -i <TESTS>,       ignore certain tests, where <TESTS> are relative paths in <TEST_DIR> directory, like: (\"test01.in test02.in\")
+      -iR <TESTS_R>,    ignore tests in <TEST_DIR> directory with extended regex (grep -w -E <TESTS_R>)  (like \"test1.in\" or \"test0[1-5].*\")
       -r <REPEAT>,      repeat selected tests for <REPEAT> times
+      -nW,              doesnt remove all \'\r\' cariage returns characters from all files in <TEST_DIR> 
       -t <TIMEOUT>,     set timeout for the tests (doesnt inform of timeout, cant get it to work :<)\n"
 }
 
 test_outputs(){
 
-    for TEST_FILE in ./datapub/*.in; do
+    for TEST_FILE in ./$TEST_DIR/*.in; do
     #echo "$TEST_FILE"
         if [ "$IGNORE_TESTS" == "yes" ]; then
 
@@ -139,15 +150,21 @@ test_outputs(){
 main(){
     set -e
 
-
     compile
     ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
+
+    if [ ! "$DO_C_RETURNS" == "yes" ]; then
+
+        remove_cariage_returns
+    fi
+
     for i in $(seq $REPEAT);
     do 
         quitable "\nRunning $i...\n"
         test_outputs
     done
 
+    #makes a sound, when script is finished
     if [ ! "$QUIET" == "yes" ]; then
 
         tput bel
@@ -183,8 +200,10 @@ while [[ "$#" -gt 0 ]]; do
         -c) COMPILATOR="$2";shift;;
         -u) UPDATE="yes";;#
         -d) DO_DIFF="yes";;#
+        -D) TEST_DIR="$2";shift;;
         -t) TIMEOUT="$2"; quitable "Running with timeout = $TIMEOUT\n";shift;;#
         -r) REPEAT="$2"; quitable "Running with repeat = $REPEAT\n";shift;;#
+        -nW) DO_C_RETURNS="no";;#
         -i) TESTS_TO_IGNORE+=("$2"); IGNORE_TESTS="yes"; quitable "Ignoring... = '%s'\n" "${TESTS_TO_IGNORE[*]}";shift;;#
         -iR) IGNORE_REGEX="$2"; IGNORE_TESTS="yes"; quitable "Ignoring... = '$IGNORE_REGEX'\n";shift;;#
         
