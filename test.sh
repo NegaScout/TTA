@@ -19,6 +19,7 @@ COMPILATOR="gcc"
 SOURCE_FILES="main.c" #default source file
 TEST_DIR="datapub"
 DO_C_RETURNS="yes"
+PACKAGE_NAME="alg_solution"
 
 quitable(){
 
@@ -48,7 +49,13 @@ compile(){
 
         COMPILATOR="make" 
         quitable "Compiling using ${COMPILATOR}...\n"
-        $COMPILATOR
+        $COMPILATOR # $COMPILATOR == make 
+    elif [ "$COMPILATOR" == "javac" ]; then
+
+        mkdir -p $PACKAGE_NAME
+        #cp ${SOURCE_FILES} $PACKAGE_NAME
+        echo $SOURCE_FILES | xargs $COMPILATOR
+        BINARY="${PACKAGE_NAME}.Main"
     else
 
         quitable "Compiling using ${COMPILATOR} -o ${BINARY} ${SOURCE_FILES} ${FLAGS}...\n"
@@ -151,7 +158,8 @@ main(){
     set -e
 
     compile
-    ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
+    # this became vroken when adding support for Java
+    #ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
 
     if [ ! "$DO_C_RETURNS" == "yes" ]; then
 
@@ -198,6 +206,7 @@ while [[ "$#" -gt 0 ]]; do
         -F) FLAGS="$2";shift;;
         -m) MAKE="yes";;#
         -c) COMPILATOR="$2";shift;;
+        -p) PACKAGE_NAME="$2"; quitable "Using \"$PACKAGE_NAME\" package name...\n";shift;;
         -u) UPDATE="yes";;#
         -d) DO_DIFF="yes";;#
         -D) TEST_DIR="$2";shift;;
