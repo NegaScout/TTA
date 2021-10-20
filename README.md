@@ -10,7 +10,7 @@ Usage: ./test.sh ([OPTION] [ARGS]?)*
       -h,               prints help
       -c <COMPILATOR>,  uses specified compilator (default is gcc, use javac for java)
       -s <S_FILES>,     uses specified source files (Use as \"source1.c source2.c\" ..!), default is \"main.c\"
-      -F <FLAGS>,       feeds specified flags into compilator args in \"\$COMPILATOR -o \$SOURCE_FILES \$BINARY \$FLAGS\" manner
+      -F <FLAGS>,       feeds specified flags into compilator args in \"\$COMPILATOR -o \$BINARY \$SOURCE_FILES \$FLAGS\" manners
       -p)               specifies package name (needed for java PACKAGE_NAME.Main execution, did not test without packages)
       -q,               supresses any text outputs
       -o,               target binary AND output binary for COMPILATOR
