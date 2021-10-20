@@ -19,6 +19,7 @@ COMPILATOR="gcc"
 SOURCE_FILES="main.c" #default source file
 TEST_DIR="datapub"
 DO_C_RETURNS="yes"
+PACKAGE_NAME="alg_solution"
 
 quitable(){
 
@@ -48,7 +49,13 @@ compile(){
 
         COMPILATOR="make" 
         quitable "Compiling using ${COMPILATOR}...\n"
-        $COMPILATOR
+        $COMPILATOR # $COMPILATOR == make 
+    elif [ "$COMPILATOR" == "javac" ]; then
+
+        mkdir -p $PACKAGE_NAME
+        #cp ${SOURCE_FILES} $PACKAGE_NAME
+        echo $SOURCE_FILES | xargs $COMPILATOR
+        BINARY="java ${PACKAGE_NAME}.Main"
     else
 
         quitable "Compiling using ${COMPILATOR} -o ${BINARY} ${SOURCE_FILES} ${FLAGS}...\n"
@@ -99,9 +106,10 @@ show_help(){
        Example of using ./test.sh -d -t 5 -r 3 -o \"./main\" -iR \"test0[1-5].*\"
        Exit code is number of failed tests. 
       -h,               prints help
-      -c <COMPILATOR>,  uses specified compilator (default is gcc)
+      -c <COMPILATOR>,  uses specified compilator (default is gcc, use javac for java)
       -s <S_FILES>,     uses specified source files (Use as \"source1.c source2.c\" ..!), default is \"main.c\"
       -F <FLAGS>,       feeds specified flags into compilator args in \"\$COMPILATOR -o \$SOURCE_FILES \$BINARY \$FLAGS\" manner
+      -p)               specifies package name (needed for java PACKAGE_NAME.Main execution, did not test without packages)
       -q,               supresses any text outputs
       -o,               target binary AND output binary for COMPILATOR
       -m,               compile with your local Makefile
@@ -151,7 +159,8 @@ main(){
     set -e
 
     compile
-    ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
+    # this became vroken when adding support for Java
+    #ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
 
     if [ ! "$DO_C_RETURNS" == "yes" ]; then
 
@@ -198,6 +207,7 @@ while [[ "$#" -gt 0 ]]; do
         -F) FLAGS="$2";shift;;
         -m) MAKE="yes";;#
         -c) COMPILATOR="$2";shift;;
+        -p) PACKAGE_NAME="$2"; quitable "Using \"$PACKAGE_NAME\" package name...\n";shift;;
         -u) UPDATE="yes";;#
         -d) DO_DIFF="yes";;#
         -D) TEST_DIR="$2";shift;;
