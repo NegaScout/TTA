@@ -15,7 +15,7 @@ BINARY="./main.out" #default binary path. its not main to not overwrite your oth
 QUIET=""
 FLAGS="-O3"
 DIFF=""
-COMPILATOR=""#gcc # script still compiles, when no compiler is specified
+COMPILATOR="" #gcc # script still compiles, when no compiler is specified
 SOURCE_FILES="main.c" #default source file
 TEST_DIR="datapub"
 DO_C_RETURNS="yes"
@@ -160,12 +160,19 @@ main(){
     if [ ! "$COMPILATOR" == "" ]; then
 
   	    compile
+    else
+        quitable "Compilator not specified. Change, if you are not targeting raw binary.\n" | colorize yellow
     fi
     
-    # this became vroken when adding support for Java
-    #ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
+    
+    if [ ! "$COMPILATOR" == "javac" ]; then
 
-    if [ ! "$DO_C_RETURNS" == "yes" ]; then
+        # this became broken when adding support for Java
+  	    ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist!\n" | colorize red; exit 1;)
+    fi
+    
+
+    if [ "$DO_C_RETURNS" == "yes" ]; then
 
         remove_cariage_returns
     fi
