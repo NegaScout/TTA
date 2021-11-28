@@ -15,7 +15,7 @@ BINARY="./main.out" #default binary path. its not main to not overwrite your oth
 QUIET=""
 FLAGS="-O3"
 DIFF=""
-COMPILATOR="gcc"
+COMPILATOR=""#gcc # script still compiles, when no compiler is specified
 SOURCE_FILES="main.c" #default source file
 TEST_DIR="datapub"
 DO_C_RETURNS="yes"
@@ -157,8 +157,11 @@ test_outputs(){
 
 main(){
     set -e
+    if [ ! "$COMPILATOR" == "" ]; then
 
-    compile
+  	    compile
+    fi
+    
     # this became vroken when adding support for Java
     #ls | grep -E -w "${BINARY##"./"}" &>/dev/null || (quitable "File \'${BINARY##"./"}\' doesnt exist\n" | colorize red; exit 1;)
 
